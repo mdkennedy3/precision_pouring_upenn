@@ -1,0 +1,6 @@
+final desired height specified at start:    /des_height
+joint states, revealing angle of 'right_j6':    /robot/joint_states
+filtered mh, mhdot passed for control from either scale or vision:    /mh_mh_dot
+raw output of scale:    /scale_node/scale
+output of height, and image with dots drawn:    /LDHeight
+commanded omega:    /robot/limb/right/joint_command

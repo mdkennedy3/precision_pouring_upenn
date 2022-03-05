@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <!--
+  <node name="scale_node"  pkg="usb_scale"  type="usb_scale_node" />
+   -->
+  <include file="$(find pouring_unknown_geom)/launch/arduino_scale.launch" />
+
+</launch>

@@ -1,0 +1,4 @@
+float64[] angles
+float64[] volumes
+---
+float64[10] coefs

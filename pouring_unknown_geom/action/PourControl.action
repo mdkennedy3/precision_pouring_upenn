@@ -1,0 +1,9 @@
+# Goal definition
+float64 desired_volume_ml
+float64 theta_start
+
+---
+# Result definition
+bool result
+string error_msg
+---

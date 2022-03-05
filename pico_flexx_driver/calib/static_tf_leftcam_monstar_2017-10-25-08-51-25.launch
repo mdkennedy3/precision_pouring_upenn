@@ -1,0 +1,7 @@
+<launch>
+  <arg name="leftcam_frame"/>
+  <arg name="monstar_frame"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="leftcam_monstar_tf"
+      args="0.09512 0.05199 0.00155   3.126122 0.007782 -0.274796
+            $(arg leftcam_frame) $(arg monstar_frame)"/>
+</launch>

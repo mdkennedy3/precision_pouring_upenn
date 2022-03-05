@@ -1,0 +1,23 @@
+<launch>
+  <arg name="camera" default="camera"/>
+  <arg name="image" default="image_raw"/>
+  <arg name="camera_info" default="camera_info"/>
+  <arg name="tags" default="tags"/>
+
+<node pkg="apriltag_ros" name="apriltag_pose_estimator"
+    type="apriltag_pose_estimator" output="screen" >
+    <remap from="~apriltags" to="$(arg tags)"/>
+    <remap from="~camera_info" to="$(arg camera_info)"/>
+    <remap from="~transform" to="transform_cam_apriltag"/>
+    <param name="auto_disconnect" type="bool" value="false"/>
+    <param name="broadcast_tf" type="bool" value="true"/>
+    <rosparam param="tag_descriptions">[
+      {id: 4, size: 0.03, frame_id: cylinder_Tag},
+      {id: 80, size: 0.017},
+      {id: 81, size: 0.017},
+      {id: 82, size: 0.017},
+      {id: 83, size: 0.017}]
+    </rosparam>
+  </node>
+
+</launch>

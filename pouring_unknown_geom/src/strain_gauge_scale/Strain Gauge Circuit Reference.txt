@@ -1,0 +1,43 @@
+Strain Gauge -> Board
+
+Red    |  E+   (AVDD / Power)
+Black  |  E-   (GND)
+White  |  A-   (Negative Input)
+Green  |  A+   (Positive Input)
+
+
+Board -> Arduino
+
+GND | GND
+DT  | A1 
+SCK | A0
+VCC | +5V
+
+1. https://www.sunrom.com/p/loadcell-sensor-24-bit-adc-hx711
+
+2. http://www.uxcell.com/05kg-weighing-load-cell-sensor-for-electronic-balance-p-126351.html
+
+3. https://github.com/bogde/HX711/blob/master/examples/HX711SerialBegin/HX711SerialBegin.ino
+
+4. https://www.intension-design.com/buy/
+
+
+Linear Actuator Motor Driver
+
+Vin    |   Open
+GND    |   GND                  (Black)
+VDD    |   5 Volts              (Red)
+IN2    |   PIN 3                (Orange)
+IN1    |   PIN 2                (Brown)
+D2     |   PWM / Open  PIN 13   (Yellow)
+D1     |   Bridge 
+SF     |   Open
+FB     |   Open
+EN     |   Bridge
+Slew   |   Open / Open
+Inv    |   Open / Open
+
+VIN    |   Power for Linear Actuator
+GND    |   GND
+OUT2   |   Lead for Linear Actuator
+OUT1   |   Lead for Linear Actuator

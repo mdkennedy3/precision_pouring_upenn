@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+<!-- Find height in cm to pass to liquid detect to draw target line -->
+<arg name="des_height_cm" default="2.4"/>
+<arg name="flea_bool" default='true' />
+<arg name="bluefox_bool" default="false"/>
+
+ <arg name="recieving_container_area" default="41.66"/>  
+  <rosparam param="recieving_container_area" subst_value="True">$(arg recieving_container_area)</rosparam>  
+
+
+    <!-- Run before all others -->
+<!-- This makes the grippers operable from the cuff buttons -->
+<include file="$(find pouring_control_pkg)/launch/gripper.launch"  /> 
+
+<include file="$(find pouring_control_pkg)/launch/scale_launch.launch"  />
+<!--
+<node name='measurement_node'   pkg='pouring_control_pkg'  type='meas_state_node.py' />
+-->
+
+<node name='measurement_node'   pkg='pouring_control_pkg'  type='meas_state_node_vision_and_scale_kf' />
+
+<!-- modes: -m ['full', 'j6'] -->
+<arg name="start_mode" default="j6" />
+<arg name="move_to_start_position" default="true"/>
+<arg name="start_j6_angle" default="2.1085830078125"/>
+<rosparam param="start_j6_angle" subst_value="True">$(arg start_j6_angle)</rosparam>
+<node name='go_to_start_pose'   pkg='pouring_control_pkg'  type='go_to_start_pose.py' args="-m $(arg start_mode)" if="$(arg move_to_start_position)" />
+
+
+<!-- Visualize the end effector forces in rviz -->
+<node name='vis_forces' pkg='pouring_control_pkg' type='vis_end_effector_forces.py' />
+
+<arg name='vis' default='false'/> 
+<!-- Need to get the system to update -->
+<node name="rviz_sawyer_forces" pkg="rviz" type="rviz" args="-d $(find pouring_control_pkg)/launch/sawyer.rviz" if="$(arg vis)">
+<rosparam command="load" file="$(find sawyer_moveit_config)/config/kinematics.yaml"/> 
+</node>
+
+
+<!--target mass in grams/ml -->
+<arg name='ml' default='100'/>
+
+<node name='pub_des_height' pkg='pouring_control_pkg' type='pub_desired_height.py' args="-d $(arg ml)" output='screen'/>
+
+
+<!-- For visualization with kinect L,R,M,A **Doesnt matter now ** -->
+<!-- <arg name="vis_side" default="-selection L"/>  -->
+<!-- <include file="$(find liquid_level_detection)/launch/liquid_detect.launch" args="$(arg vis_side)"/> -->
+
+ <arg name="receiving_cup_glass" default="true"/> <!-- choose which glass -->
+
+
+<include file="$(find liquid_level_detection)/launch/liquid_detect.launch" >
+  <arg name="flea3" value="$(arg flea_bool)"/>
+  <arg name="bluefox" value="$(arg bluefox_bool)"/>
+  <arg name="des_height_cm" value="$(arg des_height_cm)"/>
+  <arg name="receiving_cup_glass" value="$(arg receiving_cup_glass)"/>
+  <remap from="~apriltags" to="apriltags"/>
+</include>
+<!-- 
+<node pkg ="image_proc" type="image_proc" name="image_proc_point_grey" ns="/pg_13344889" if="$(arg flea_bool)"/>
+-->
+<!-- Display Grasp logo -->
+<arg name="dis_image" default="/home/monroe/Desktop/grasp_logo.png"/>
+<arg name='disp_image_bool' default='false'/>
+<node name='head_image' pkg='intera_examples' type='head_display_image.py' args='-l -f $(arg dis_image)' if='$(arg disp_image_bool)'/>
+
+
+</launch>

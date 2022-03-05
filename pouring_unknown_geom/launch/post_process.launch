@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <!--For processing data from single pour -->
+  <arg name="post_process_pour_curve" default="True"/>
+  <arg name="bagname" default="constant_pour_for_debug_trial_001.bag"/>
+
+  <!--For comparing methods (over many bags) -->
+  <arg name="post_process_method_comparison" default="False"/>
+  <arg name="method_comp_bags_path" default="$(find pouring_unknown_geom)/bagfiles/cont6/150ml"/>
+  <arg name="show_dist_pts" default="True"/>
+  <arg name="show_labeled_bag_trials" default="False"/>
+  <!--if box plots are desired -->
+  <arg name="method_comp_plot_type" default="final_err_time_box_plots" /> <!--final_err_time_coupled or final_err_time_box_plots -->
+  <arg name="method_comp_seperate_plots" default="False" /> <!--seperate plots or subplots (true case) -->
+
+  <group if="$(arg post_process_pour_curve)">
+    <node name='post_processing'   pkg='pouring_unknown_geom'  type='post_process_script.py' output='screen'>
+      <rosparam param="bagfile_name" subst_value="True">$(arg bagname)</rosparam>
+    </node>
+  </group>
+
+
+   <group if="$(arg post_process_method_comparison)">
+      <node name='post_processing_method_comp' pkg='pouring_unknown_geom' type='new_gp_method_comparisons.py' output='screen' >
+        <param name="post_process_bags_path" value="$(arg method_comp_bags_path)" type="str" />
+        <param name="show_dist_pts" value="$(arg show_dist_pts)" type="bool" />
+        <param name="show_labeled_bag_trials" value="$(arg show_labeled_bag_trials)" type="bool" />
+        <param name="plot_type" value="$(arg method_comp_plot_type)" type="str" />
+        <param name="seperate_plots" value="$(arg method_comp_seperate_plots)" type="bool" />
+      </node>
+   </group>
+
+</launch>

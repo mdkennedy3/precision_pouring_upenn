@@ -1,0 +1,10 @@
+sensor_msgs/PointCloud2 pt_cld
+string camera_frame
+float64 container_slice_resolution
+int32 num_pts_return
+pouring_msgs/ScanBoxMsg container_scan_box
+bool plot_container_points
+---
+bool success
+pouring_msgs/ContainerEdgeProfile profile
+pouring_msgs/ContainerEdgeProfile generating_cyl_points

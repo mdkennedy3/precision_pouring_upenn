@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+  <!--   
+  <arg name='ml' default='100'/>
+  <rosparam param="ml_des_volume" subst_value="True">$(arg ml)</rosparam> 
+  -->
+  <node name='main_node'   pkg='iiwa_pouring'  type='main.py' output='screen'/>
+
+
+
+
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="false"/>
+  <arg name="data_name" default="test" />
+  <arg name="data_trial" default="001" />
+
+  <node pkg="rosbag" type="record"  name="rosbag_se2planning"
+  args="-O $(find iiwa_pouring)/bagfiles/$(arg data_name)_trial_$(arg data_trial).bag
+  /Pour_Model_opt
+  /pouring_msg
+  /pour_vol_ang
+  /des_height
+  /robot/joint_states
+  /mh_mh_dot
+  /scale_node/scale
+  /robot/limb/right/joint_command
+  /h_filtered
+  /LDHeight
+  /raw_h_ml
+  /raw_h_clust_ml
+  /model_volume_output
+  /robot/head_display
+  /Hybrid_controller_data
+  "
+
+  if="$(arg save_data)"/>
+
+</launch>

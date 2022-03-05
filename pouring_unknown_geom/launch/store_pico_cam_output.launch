@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="true"/>
+  <arg name="data_name" default="generic_container" />
+
+  <node pkg="rosbag" type="record"  name="rosbag_pico_record"
+    args="-O $(find pouring_unknown_geom)/bagfiles/container_edge_profile_bags/$(arg data_name).bag
+    /monstar/points
+    /tf_static  
+  "
+  if="$(arg save_data)"/>
+
+
+</launch>
+

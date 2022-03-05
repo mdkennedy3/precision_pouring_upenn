@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+  <include file="$(find flea3)/launch/single_node.launch">
+    <arg name="device" value="13344889"/>
+    <arg name="rate" value="40"/>
+    <arg name="auto_exposure" value="false"/>
+    <arg name="auto_shutter" value="false"/>
+    <arg name="shutter_ms" value="15"/>
+    <arg name="auto_gain" value="false"/>
+    <arg name="gain_db" value="0.0"/>
+  </include>
+<!-- 
+    <arg name="calib_url" value="file://$(find iiwa_pouring)/launch/calibration_files/point_grey_calib.yaml"/> -->
+
+  <!-- <node pkg ="image_proc" type="image_proc" name="image_proc_point_grey" ns="/pg_13344889"/> -->
+
+  <!--Apriltags -->
+  <!-- <remap from="image_color_rect" to="image_rect" /> -->
+  <node pkg="apriltags_ros" type="apriltag_detector_node" name="apriltag_detector_node" output="screen" ns="/pg_13344889">
+       <remap from="image_rect" to="image_raw" />
+       <rosparam param="tag_descriptions">[
+          {id: 0, size: 0.20, frame_id: T0},
+          {id: 4, size: 0.165, frame_id: T4},
+          {id: 5, size: 0.028, frame_id: T5},
+          {id: 6, size: 0.028, frame_id: T6},
+          {id: 7, size: 0.028, frame_id: T7}]
+       </rosparam>
+       <rosparam param="class_toggle">true
+       </rosparam>
+       <remap to="tag_detections_image" from="tag_detections_image" />
+      <remap to="tag_detections" from="tag_detections" />
+  </node>
+
+  <!-- Usb scale -->
+  <node pkg="usb_scale" type="usb_scale_node" name="usb_scale" output="log"  />
+
+
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="false"/>
+  <arg name="data_name" default="new_background_methods" />
+  <arg name="data_trial" default="001" />
+
+  <node pkg="rosbag" type="record"  name="new_background_methods"
+  args="-b 1024 -O $(find pouring_unknown_geom)/bagfiles/$(arg data_name)_trial_$(arg data_trial).bag
+  /pg_13344889/image_raw
+  /pg_13344889/camera_info
+  /pg_13344889/tag_detections_image
+  /pg_13344889/tag_detections_pose
+  /pg_13344889/tag_detections
+  /usb_scale/scale
+  "
+  if="$(arg save_data)"/>
+
+
+  <!-- /pg_13344889/image_rect_color -->
+
+
+</launch>
+

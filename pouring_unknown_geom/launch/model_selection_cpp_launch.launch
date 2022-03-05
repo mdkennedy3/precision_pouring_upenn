@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="volume_profile_poly_degree" default="9" />
+  <arg name="volume_solution_mode" default="param" />
+
+   <node name="model_selection_node" pkg="pouring_unknown_geom" type="model_selection_node_new_GP_enabled" output='screen'>
+    <param name="volume_solution_mode" type="str" value="$(arg volume_solution_mode)"/>
+    <param name="volume_profile_poly_degree" type="int" value="$(arg volume_profile_poly_degree)"/>
+
+    <remap from="~pouring_msg" to="pouring_msg"/>
+    <remap from="~gp_selected_models" to="gp_selected_models"/>
+    <remap from="~Pour_Model_opt" to="Pour_Model_opt"/>
+    <remap from="~reset_model_selection_node" to="reset_model_selection_node"/>
+    <remap from="~py_profile_opt_srv" to="py_profile_opt_srv"/>
+  </node>
+
+
+  <node name="profile_opt_py_serv" pkg="pouring_unknown_geom" type="profile_optimization_pyservice.py" >
+    <remap from="~py_profile_opt_srv" to="py_profile_opt_srv"/>
+  </node>
+
+</launch>
+
+

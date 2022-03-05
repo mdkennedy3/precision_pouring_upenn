@@ -1,0 +1,14 @@
+the containers 024,025,026,027,028,029 are all the manufactured containers
+squares: 
+small:24
+large: 25
+
+cylinder:
+small: 26
+large:27
+
+flask: 
+small: 28
+large: 29
+
+

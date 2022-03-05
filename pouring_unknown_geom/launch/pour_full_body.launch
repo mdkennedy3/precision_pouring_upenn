@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<launch>
+<!-- <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1 0 0 0 0 0 1 right_l6 cup_test 100" /> -->
+<arg name="sawyer_robot" default="true" />
+<arg name="iiwa_robot" default="false" />
+
+<!-- <node pkg="tf" type="static_transform_publisher" name="pico_camera_tf_broadcaster" args="0.06 0.0 0 1.57 0 0 right_hand pico_camera_link 100" />
+<node pkg="tf" type="static_transform_publisher" name="fla_tf_broadcaster" args="0.0 0.0 0 0 0 0 pico_camera_link fla/rgbd 100" /> -->
+
+<node pkg="pouring_unknown_geom" type="setup_motions.py" name="setup_motions" output='screen'/>
+<!-- To publish joint vel/pos especially for saywer -->
+<node pkg="pouring_unknown_geom" type="command_full_joints.py" name="sim_joint_commander" output='log' />
+
+
+<group if="$(arg sawyer_robot)" ns='robot'>
+  <param name="cup_edge_to_finger_distance" type="double" value="0.1" />
+  <param name="robot_finger_safety_distance" type="double" value="0.015" />
+  <param name="z_world_beaker" type="double" value="0.11" />
+  <param name="receiving_beaker_radius" type="double" value="0.08"  />
+  <param name="pour_past_edge_distance" type="double" value="0.015 " />
+
+  <param name="robot_type" type="string" value="sawyer" />
+  <node pkg="pouring_unknown_geom" type="pour_full_body.py" name="full_body_pour_node" output='screen'/>
+</group>
+
+<group if="$(arg iiwa_robot)" ns='iiwa'>
+  <param name="cup_edge_to_finger_distance" type="double" value="0.3" />  <!-- This should be set in code in real time for a particular grasp -->
+  <param name="robot_finger_safety_distance" type="double" value="0.015" />
+  <param name="z_world_beaker" type="double" value="0.11" />
+  <param name="receiving_beaker_radius" type="double" value="0.08"  />
+  <param name="pour_past_edge_distance" type="double" value="0.015 " />
+
+
+  <param name="robot_type" type="string" value="iiwa" />
+  <node pkg="pouring_unknown_geom" type="pour_full_body.py" name="full_body_pour_node"/>
+</group>
+
+</launch>
+

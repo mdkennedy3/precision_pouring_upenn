@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="detector_nn" default="true"/>
+
+<group ns="pouring_control" clear_params="false">
+
+  <arg name="robot_ns" default="robot"/>  <!--iiwa or robot (for sawyer) -->
+
+  <arg name="flea_device" value="13344889"/>
+  <arg name="camera" default="pg_$(arg flea_device)"/>
+  <arg name="image_topic" default="$(arg camera)/image_raw"/>
+
+  <arg name='ml_des_volume' default='100'/>
+
+  <!-- Find height in cm to pass to liquid detect to draw target line -->
+  <!-- For plastic contiainer 100ml is 3.147cm, for glass it is 2.4cm -->
+  <!-- Must be set manually: Vol_ml/Area :: default for 100ml -->
+  <!-- <arg name="des_height_cm" default="2.85"/> -->
+   <arg name="des_height_cm" default="2.4"/> 
+
+  <!--height for glass cylinder 0.089m tagsize: 0.017, yoffset was 40 but that was too low, area 41.6666-->
+  <!--Front tag0 was 0.02m and height of 0.091 in front -->
+  <!-- New plastic reciever height is 7.55cm, tagsize = 0.0192cm, Area: 38.515cm**2 , yoffset was 20, xoffset 50 (still got jumpts)-->
+  <arg name="receiving_cup_glass" default="true"/> <!-- choose which glass -->
+
+  <arg name="apriltag_id" default="4"/>
+  <arg name="apriltag_size" default="0.03" />
+ <arg name="cylinder_height" default="0.08"/> 
+
+  <group unless="$(arg receiving_cup_glass)">
+    <arg name="apriltag_size" value="0.03"/>
+    <arg name="cylinder_height" value="0.08"/>  <!-- was 0.084 -->
+  </group>
+
+  <arg name="start_j6_angle" default="0"/>
+
+  <!-- Time delay in seconds (1,2,3): param used in control and model creation (otherwise mult. Vol for same angle can occur) -->
+  <arg name="pour_time_delay" default="1.5"/>
+
+  <!-- Set this paramater for estimated initial volume of fluid in container (in ml) -->
+  <arg name="container_estimated_initial_volume" default="150.0"/>
+
+  <!--volume lowpass filter V* = a*V_i + (1-a)V_{i-1} :: was 0.8 -->
+  <arg name="mh_low_pass_filter_constant" default="0.8"/>
+
+  <!--For plastic continaer: 35.08, for Glass 41.66  cm^2-->
+  <!-- <arg name="recieving_container_area" default="41.66"/> -->
+  <arg name="recieving_container_area" default="0.005296"/> <!--units are in meters -->
+
+  <!-- To display controller video -->
+  <arg name="controller_output_bool" default="true" />
+
+  <arg name="volume_solution_mode" default="param" /> <!--param, semiparam, nonparam -->
+
+
+ <!-- Launch node to make explicit th,dv message from joint messages and filtered height -->
+  <node name="repub_angle_vol_node" pkg="pouring_unknown_geom" type="repub_angle_vol_node">
+    <remap from="~joint_states" to="/$(arg robot_ns)/joint_states"/>
+    <remap from="~pour_angle_state" to="pour_angle_state"/>
+    <remap from="~h_filtered" to="h_filtered"/>
+    <remap from="~mh_mh_dot" to="mh_mh_dot"/>
+    <remap from="~pour_vol_ang" to="pour_vol_ang"/>
+  </node>
+
+  <!--Launch dv publisher node (that has option to publish example data from stored file -->
+  <node name="pub_volume_for_model_node" pkg="pouring_unknown_geom" type="pub_volume_for_model.py" output='screen'>
+    <param name="start_j6_angle" type="double" value="$(arg start_j6_angle)"/>
+    <param name="pour_time_delay" type="double" value="$(arg pour_time_delay)"/>
+  </node>
+
+  <!--Launch the model predictor node -->
+  <arg name="volume_profile_poly_degree" default="9" />
+
+  <include file="$(find pouring_unknown_geom)/launch/model_selection_cpp_launch.launch" >
+    <arg name="volume_solution_mode" default="$(arg volume_solution_mode)" />
+    <arg name="volume_profile_poly_degree" default="$(arg volume_profile_poly_degree)" />
+  </include>
+
+  <!-- Launch model volume visualization node -->
+  <node name="visualize_model_node" pkg="pouring_unknown_geom" type="visualize_model_pred.py" output='screen'>
+  </node>
+
+  <node name='main_node'   pkg='pouring_unknown_geom'  type='main.py' output='screen'>
+    <param name="ml_des_volume" type="double" value="$(arg ml_des_volume)"/>
+    <param name="recieving_container_area" type="double" value="$(arg recieving_container_area)"/>
+    <param name="volume_solution_mode" type="string" value="$(arg volume_solution_mode)"/>
+    <remap from="joint_states" to="/$(arg robot_ns)/joint_states"/>
+  </node>
+
+  <!--Launch iiwa control node -->
+  <node name="sawyer_control_node" pkg="pouring_unknown_geom" type="sawyer_control_node.py" output='screen'>
+    <remap from="joint_states" to="/$(arg robot_ns)/joint_states"/>
+  </node>
+
+  <!-- Launch controller video feed -->
+  <node name='disp_controller_video'   pkg='pouring_unknown_geom'  type='controller_video.py' output='screen' if='$(arg controller_output_bool)'>
+    <remap from="input_img" to="LDOutput"/>
+  </node>
+
+
+  <arg name="disp_pour_head" default="false" />
+  <node name="disp_live_image_on_head" pkg="iiwa_pouring" type="intera_head_video.py" if="$(arg disp_pour_head)"/>
+
+
+</group>
+
+<include file="$(find pouring_control_pkg)/launch/gripper.launch"/>
+
+</launch>
+
+<!--to pour quickly just use run_simple_pour.py -->
+
+

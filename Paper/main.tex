@@ -1,0 +1,414 @@
+%header info for ieee conf
+\input{ieee_headers}
+
+\title{\LARGE \bf Precise Dispensing of Liquids  Using  Visual Feedback
+}
+
+\author{Monroe Kennedy III$^{1}$, Kendall Queen$^{2}$, Dinesh Thakur$^{1}$, Kostas Daniilidis$^{2}$, and Vijay Kumar$^{1}$% <-this % stops a space
+\thanks{$^{1}$ Mechanical Engineering and Applied Mechanics,
+        University of Pennsylvania, Pennsylvania, PA 19104
+        {\tt\small (kmonroe, kumar)@seas.upenn.edu}}%
+\thanks{$^{2}$ Computer and Information Science,
+        University of Pennsylvania, Pennsylvania, PA 19104
+        {\tt\small kostas@cis.upenn.edu}}%
+}
+
+
+
+
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+1. Address the precise dispensing of liquids without special purpose pipettes or syringes. 
+2. Important in manufacturing and biotech industry.
+3. We show systematic approach to get a robot to pour from rectangular container into a beaker using visual feedback. 
+4. Specifically (a) a model for pouring; (b) Model based algorithm to drive a robot arm; (c) Visual feedback for regulating the pouring rate.
+5. Show experimental results with a Sawyer.
+\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{INTRODUCTION}
+\begin{comment}
+Outline
+1. Give context for need of autonomous pouring 
+- Goal of robotics is to assist in repetitive, laborious, and dangerous tasks, pouring can be all of these
+-In context of wet lab research, it is desired to pour precise amounts of fluids (buffers, solvents) 
+-Pouring in metal work casting using liquid metal.
+2. Present previous approaches
+-Learning Based methods [disadvantage is number of tries required]
+-Sloshing Suppression using Hybrid shape approach [consists of proportional control gain, notch filter and low-pass filter to suppress sloshing]
+-Model representation approaches that use feed-forward with hybrid shape approach to minimize sloshing, with feedback only in [noda 2007] which used a lookup table. 
+-Vision: detect the water in the first container [Fox], detect the flow in transit [Atkeson: CMU]
+
+3. Contrast areas needing further work (my extension), Emphasize new contribution
+-We detect the fluid in the container being poured into, (for applications where a precise amount is needed, the final position of the water should be observed)
+-We present an analytical model for pouring then present hybrid control method to perform closed form control for precise pours
+
+4. Outline rest of paper
+-Present the general pouring analytical model 
+\end{comment}
+
+
+One of the main goals in robotics is to assist in repetitive, laborious, and dangerous tasks. Precise pouring of fluids can easily fall under each of these categories, examples being manipulation of hazardous biological fluids, molten metal in the casting industry, or even the assembly of buffers and solvents in wet lab research. In each of these examples a common requirement is that a specified amount of fluid be poured with precision to a desired amount. 
+
+To achieve these precise motions required for pouring, researchers have used learning models to perform reinforcement and imitation learning to pour \cite{tamosiunaite2011learning}, \cite{kunze2013acquiring}, \cite{rozo2013force}. While effective, limitations of these methods are the number of trials required to learn the pouring task, no measure of system stability equivalent to those provided in analytical models but instead statistical performance, and non-generalization of learning model to immediately extend to other cases.  
+
+One approach to perform smooth pouring is to minimize sloshing of the liquid while pouring a predetermined trajectory. Some research proves to suppress sloshing while pouring using a hybrid shape approach which consists of proportional gain, notch and a low pass filter \cite{yano2001sloshing}, \cite{kaneko2003supervisory}, \cite{noda2005control}, \cite{sugimoto2002liquid}. This is particularly effective when given a proposed system model, the input consists of feed forward based on proposed model, and hybrid shape approach to mitigate sloshing during the pour \cite{noda2005control}, \cite{sugimoto2002liquid}, \cite{tsuji2014high}. Noda and Terashima tried to overcome the requirement for the need of an analytical inverse of the dynamical function by using a numerical look up table for the desired height \cite{noda2007falling} and corresponding input. In the above model based examples \cite{tsuji2014high}, \cite{noda2007falling} load cells were used to provide real time feedback on poured fluid mass. 
+
+Vision is also used for real time feedback by detecting how much fluid is currently in the pouring container, or in transit. Mottaghi et al. present a method using learning to estimate the volume of containers and the amount of fluid inside them using vision \cite{mottaghi2017see}. Yamaguchi et al. present a method using stereo vision and optical flow to track fluids being poured during flight between containers \cite{yamaguchi2016stereo}.  
+
+Our proposed method extends previous work in that it is analytically based and we provide a closed form expression for the control input using hybrid controller and feedback linearization. We also show that we are able to detect the height of the fluid using vision, and due to our pouring container design specifications, we only need observe along with the angle of the pouring container, the height or mass of the fluid in the container being poured into and its derivative. Using a minimum jerk trajectory for the fluid height, we are able to ensure smooth motion for our end-effector and fluid height \cite{zefran1998generation}. The rest of the paper is organized as follows, Section \ref{sec:Gen_Pour_Mod} describes the general pouring model. Section \ref{sec:Specific_Pour_Mod} presents our specific system design and justification. Section \ref{sec:Visual_Feed} describes our method of visual feedback to detect the fluid height. Section \ref{sec:ResDis} shows our results and discussion for implementing this method on the Rethink Robotics Sawyer manipulator shown in Figure \ref{fig:exp_setup_isometric_sawyer}. 
+
+\begin{figure}[t!]
+\centering
+\includegraphics[trim=27.5cm 5.5cm .5cm 3.5cm, clip=true, width=2.5in]{figures/expsetup1.jpg} \label{fig:expsetup2}
+    \caption{Experimental setup using the Rethink Robotics Saywer manipulator to pour precise amounts of water into a beaker using vision for feedback control.} \label{fig:exp_setup_isometric_sawyer}
+\end{figure}
+
+
+
+\section{Methodology}\label{sec:Methods}
+\begin{comment}
+Outline
+1. General Model
+  a) Pouring Problem and representation (General Form)
+      i)Represent Volume in both containers
+      ii) Represent flowrate in both containers, bringing to general form
+      iii) derive all general forms of terms in the general flowrate eqn
+  b) Vision Techniques
+  c) Challenges with arbitrary Container shapes
+2. Specific Model
+  a) Present specific model (rectangular pouring container, in figure)
+  b) present thrm and proof that this model provides desired simplification:
+
+	Thm1: Rectangular container \alpha parameterized by (H_\alpha, L_{L,\alpha},W,l,\theta) allows for the representation of the entire system state solely in the measured height and of the fluid in the poured to flask h, its derivative \dot{h}, angle of the poured container and wrist $\theta$ with input being angular velocity of the wrist $\omega$.
+Proof: substitution of analytical model to represent dynamics in only these terms
+
+	c) Present thrm and proof that this model stays within the controllable region with our hybrid control structure given it starts in the required domain.
+	Thm2: The proposed analytical model and resultant feedback control is valid in the domain $D_0$ specified by non-zero $x_2 = \dot{h} \neq 0$, and $x_3 = \theta \in (-\frac{\pi}{2}, \frac{\pi}{2})$. And our hybrid control keeps the system in $D_0$, for states starting within D_0 and the point (x_1, x_2=0, x_3=0).
+  Proof: represent system states (x1,x2,x3) =(h,dh,th), provide domain for feedback linearization {x2!=0, x2&x3 !=0 simultaneously, x1 in (-pi/2,pi/2)}
+
+\end{comment}
+
+
+
+\subsection{General Pouring Model}\label{sec:Gen_Pour_Mod}
+
+We propose a simple model to characterize smooth flow between two open containers. We will assume as in \cite{sugimoto2002liquid} that the fall time of the fluid between the containers is negligible. Consider a pouring container $\alpha$ and receiving container $\beta$, with respective volumes $V_{\alpha}$, $V_{\beta}$ respectively as shown in Figure \ref{fig:general_diagram}. For container $\beta$, the height of fluid $h_{\beta}$ and cross sectional area $A_{\beta}(h_{\beta})$ together define the volume as in Equation \eqref{eqn:beta_volume}.  
+\begin{equation}
+V_{\beta}= h_{\beta} A_{\beta}(h_{\beta})
+\label{eqn:beta_volume}
+\end{equation}
+
+For pouring container $\alpha$, the maximum volume of the container is defined as $V_{\alpha} = H_{\alpha} A_{\alpha}(z_{\alpha})$ as shown in Figure \ref{fig:general_diagram}, where $H_{\alpha}$ is the height of the container, and $A_{\alpha}(z_{\alpha})$ is the cross sectional area parameterized by the body frame coordinate. When container $\alpha$ is rotated by angle $\theta$, there will be a volume of the fluid above the pouring lip $V_{L,\alpha}$, and volume below the pouring lip $V_{s,\alpha}$, separated by a surface area $A_{s,\alpha}(\theta)$ as shown in Figure \ref{fig:general_diagram}. The height of the fluid above the lip is defined as $h_{L,\alpha}$, and for small heights the volume is approximated by Equation \eqref{eqn:Vla} as in \cite{tsuji2014high},\cite{noda2007falling}.
+
+\begin{equation}
+V_{L,\alpha} \simeq h_{L,\alpha} A_{s,\alpha}(\theta)
+\label{eqn:Vla}
+\end{equation}
+
+The volume below the surface can be found by integrating the cross sectional area from the base of the container to the dividing surface $A_{s,\alpha}$ which defines the volume $V_{s,\alpha}$ is defined as Equation \eqref{eqn:Vsa}.
+
+\begin{equation}
+V_{s,\alpha} = \int A_{\alpha}(z_{\alpha}) dz_{\alpha}
+\label{eqn:Vsa}
+\end{equation}
+
+The dividing surface $A_{s,\alpha}$ is a function of the angle $\theta$, container geometry and volume of fluid below the surface $V_{s,\alpha}$. Assuming the only degree of freedom is $\theta$, then $\theta$, its derivative $\omega = \dot{\theta}$ or higher order derivatives must be controlled to produce the desired flow rate and poured volume. 
+
+\begin{figure}[h]
+\centering
+\includegraphics[trim=1.5cm 1cm 2.5cm 2.8cm, clip=true, width=2.5in]{figures/pouring_general_diagram.pdf}
+\caption{Pouring Problem: For a fluid poured from container $\alpha$ to container $\beta$ with specified geometric parameters, the goal is to pour a precise amount of fluid using visual or weight feedback based on an analytical model and closed form control.}
+\label{fig:general_diagram}
+\end{figure}
+
+The flow rate between the two containers $\alpha$ and $\beta$ is defined as $q [\frac{m^3}{s}]$. In relation to the respective volumes the flow rate is defined by Equation \eqref{eqn:gen_flowrate_condensed}.
+\begin{equation}
+q = \dot{V}_{\beta} = - \dot{V}_{\alpha} = - (\dot{V}_{L,\alpha} + \dot{V}_{s,\alpha})
+\label{eqn:gen_flowrate_condensed}
+\end{equation}
+by expanding this differentiation based on transient terms for container $\alpha$, the flow rate Equation \eqref{eqn:gen_flowrate_condensed} becomes Equation \eqref{eqn:gen_flowrate_expanded}. Note that the partial derivatives of $ A_{s,\alpha},V_{s,\alpha}$ are required as they are not explicitly a function of time.
+\begin{align}
+q &= -\dot{h}_{L,\alpha} A_{s,\alpha} - h_{L,\alpha} \frac{\partial A_{s,\alpha}}{\partial \theta}\omega - \frac{\partial V_{s,\alpha}}{ \partial \theta} \omega \nonumber \\ 
+&=  \left( A_{\beta}(h_{\beta}) + h_{\beta} \frac{\partial A_{\beta}(h_{\beta})}{ \partial h_{\beta}} \right) \dot{h}_{\beta}
+\label{eqn:gen_flowrate_expanded}
+\end{align}
+
+To express $h_{L,\alpha}$, we define the area of the pouring mouth as $A_{L} = h_{L,\alpha} L_{L,\alpha}(h_{L,\alpha})$, where $L_{L,\alpha}(h_{L,\alpha})$ is the line of the opening of the mouth at varying heights (as shown in Figure \ref{fig:specific_diagram} where in this case it is a constant). We note that the height $h_{L,\alpha}$ is related to the flowrate by Bernoulli's Principle $\frac{v^2}{2} + gz + \frac{P}{\rho} = const.$ where $v,z,P,\rho$ are the fluid velocity, height, pressure and density respectively at a particular point in the steady, streamline flow. We consider Bernoulli's Principle acting on volume $V_{L,\alpha}$, the fluid at the top surface of this volume has no velocity, whereas the volume at the bottom (height $h_{L,\alpha}$ below the surface as a velocity $V = \sqrt{2g h_{L,\alpha}}$). As flow rate is defined as $q [\frac{m^3}{s}]$ or $[m^2 \cdot \frac{m}{s}]$, we can integrate over the pouring area to obtain the flowrate as shown in Equation \eqref{eqn:flowrate_bernoulli_general}.
+
+\begin{equation}
+q = A_{L}(h) v(h) = \int_0^{h_{L,\alpha}} L_{L,\alpha}(h) \sqrt{2g h} dh
+\label{eqn:flowrate_bernoulli_general}
+\end{equation}
+
+By differentiating this with respect to time, we can obtain an expression for $\dot{h}_{L,\alpha}$ in terms of flow rate $q, \dot{q}$. Given these fundamental equations, we consider different container designs to ensure effective state observation, system model simplicity and ultimately control.
+
+
+\subsection{Specific Pouring Model Using Rectangular Container Geometry}\label{sec:Specific_Pour_Mod}
+\begin{comment}
+a) Present specific model (rectangular pouring container, in figure), challenges with specific model (present equations basic geometries): 
+  1. Lip equation for a) rectangular lip* b) v shape lip c) circular lip
+  2. Flowrate for square* vs circular lip
+  3. Area of ellipse vs square* container
+  4. Volume below the surface for rectangular* container
+
+b) present thrm and proof that this model provides desired simplification:
+	Thm1: Rectangular container \alpha parameterized by (H_\alpha, L_{L,\alpha},W,l,\theta) allows for the representation of the entire system state solely in the measured height and of the fluid in the poured to flask h, its derivative \dot{h}, angle of the poured container and wrist $\theta$ with input being angular velocity of the wrist $\omega$.
+Proof: substitution of analytical model to represent dynamics in only these terms
+
+c) Present thrm and proof that this model stays within the controllable region with our hybrid control structure given it starts in the required domain.
+	Thm2: The proposed analytical model and resultant feedback control is valid in the domain $D_0$ specified by non-zero $x_2 = \dot{h} \neq 0$, and $x_3 = \theta \in (-\frac{\pi}{2}, \frac{\pi}{2})$. And our hybrid control keeps the system in $D_0$, for states starting within D_0 and the point (x_1, x_2=0, x_3=0).
+  Proof: represent system states (x1,x2,x3) =(h,dh,th), provide domain for feedback linearization {x2!=0, x2&x3 !=0 simultaneously, x1 in (-pi/2,pi/2)}
+\end{comment}
+
+Design considerations for the pouring container $\alpha$ include the pouring lip and container geometry. The terms that are directly related to these factors are the lip length $L_{L,\alpha}(h_{L,\alpha})$, flow rate $q(h_{L,\alpha})$, dividing area $A_{s,\alpha}(\theta)$, and volume below the lip $V_{s,\alpha}(\theta)$.
+
+Considering three cases: a rectangular lip where the length is constant, v-shaped lip that has an opening angle $\gamma$, and circular lip shape, where the entire opening has a radius $R$, the lip shape equations become those shown in Equations \eqref{eqn:rect_lip}, \eqref{eqn:v_lip}, and \eqref{eqn:circ_lip}.
+\begin{align}
+L_{L,\alpha,rect}(h) &= L_{L,alpha} \label{eqn:rect_lip} \\
+L_{L,\alpha,vshape}(h) &= 2h cos(\frac{\gamma}{2}) \label{eqn:v_lip} \\
+L_{L,\alpha,circ}(h) &= 2 \sqrt{h(2R-h)} \label{eqn:circ_lip}
+\end{align}
+The flow rate $q$ for circular and rectangular lip geometries are shown in Equations \eqref{eqn:flowrate_rect_case}, \eqref{eqn:flowrate_circ_case} and are found by integrating Equation \eqref{eqn:flowrate_bernoulli_general}.
+\begin{align}
+q_{rect} &= \frac{2}{3} L_{L,\alpha} \sqrt{2g} h_{L,\alpha}^{\frac{3}{2}} \label{eqn:flowrate_rect_case} \\
+q_{circ} &= - \frac{4\sqrt{2g}}{15}  \left(128 R^5 - 120 R^3 h_{L,\alpha}^2 \right. \nonumber \\ 
+& \left. + 20R^2h_{L,\alpha}^3 + 30Rh_{L,\alpha}^4 - 9h_{L,\alpha}^5 \right) \label{eqn:flowrate_circ_case}  
+\end{align}
+Differentiating these flow rates with respect to time produces Equations \eqref{eqn:flowrate_derivative_rect_case},\eqref{eqn:flowrate_derivative_circ_case}.
+\begin{align}
+\dot{q}_{rect} &=  L_{L,\alpha} \sqrt{2g} h_{L,\alpha}^{\frac{1}{2}} \dot{h}_{L,\alpha} \label{eqn:flowrate_derivative_rect_case} \\
+\dot{q}_{circ} &= \frac{ -4\sqrt{2g} }{15} \left(\left(-240R^3 h_{L,\alpha} + 60R^2 h_{L,\alpha}^2 \right. \right. \nonumber \\ 
+& \left. \left. + 120 R h_{L,\alpha}^3 - 45 h_{L,\alpha}^4 \right) \right) \dot{h} \label{eqn:flowrate_derivative_circ_case} 
+\end{align}
+Note that by substituting $h_{L,\alpha}$ from Equation \eqref{eqn:flowrate_rect_case} into \eqref{eqn:flowrate_derivative_rect_case} we can express Equation \eqref{eqn:flowrate_derivative_rect_case} as 
+\begin{equation}
+\dot{h}_{L,\alpha} = \left( \frac{2}{3} \right)^{\frac{1}{3}} L^{-\frac{2}{3}} (2g)^{-\frac{1}{3}} q^{-\frac{1}{3}} \dot{q}
+\label{eqn:hla_dot}
+\end{equation}
+For the dividing area $A_{s,\alpha}$, we consider two cases: a square and circular container. In both instances the cross sectional area is constant in body frame $z_{\alpha}$. The dividing area $A_{s,\alpha}$ is defined to consist of a major and minor axis $a$, $b$, where rotation occurs about the minor axis $b$. In the case of a circular container the area of an ellipse is $\pi ab$, Hence the respective areas are shown in Equations \eqref{eqn:dividing_area_circ},\eqref{eqn:dividing_area_rect}, where $a'$ is the elongated axis as a function of the angle $\theta$.
+\begin{align}
+A_{s,\alpha,circ} &= \pi a' b = \pi a b \sec(\theta)  \label{eqn:dividing_area_circ} \\
+A_{s,\alpha,rect} &= a' b = a b \sec(\theta) \label{eqn:dividing_area_rect}
+\end{align}
+Differentiation with respect to time are Equations \eqref{eqn:dividing_area_circ_diff}, \eqref{eqn:dividing_area_rect_diff}.
+\begin{align}
+\dot{A}_{s,\alpha,circ} &= \pi a b tan(\theta) sec(\theta) \omega \label{eqn:dividing_area_circ_diff} \\
+\dot{A}_{s,\alpha,rect} &=  a b tan(\theta) sec(\theta) \label{eqn:dividing_area_rect_diff} \omega
+\end{align}
+The volume of fluid below the dividing surface $V_{s,\alpha}$ is shown in Equation \eqref{eqn:rect_Vs} for rectangular geometry. Note that while other geometries can be found, this volume is straight forward. Using the geometry notation shown in Figure \ref{fig:specific_diagram}, with container width $W_{\alpha}$, length $l_{\alpha}$, total height $H_{\alpha}$. 
+\begin{align}
+V_{s,\alpha,rect} &= \int_0^{l_{\alpha}} \int_0^{H(y)} \int_0^{W_{\alpha}} dx dz dy \nonumber \\
+&= \int_0^{l_1}  W_{\alpha} H(y) dy = \int_0^{l_1}  W_{\alpha} (H_b - y \tan(\theta))  dy  \nonumber \\
+&= W_{\alpha} H_{\alpha} l_{\alpha} -\frac{l_{\alpha}^2}{2} W_{\alpha} \tan(\theta)  \label{eqn:rect_Vs}
+\end{align}
+The derivative with respect to time produces Equation \eqref{eqn:rect_Vs_diff}.
+\begin{equation}
+\dot{V}_{s,\alpha,rect} = - \frac{l_{\alpha}^2 W_{\alpha}}{2} \sec^2(
+\theta) \omega \label{eqn:rect_Vs_diff}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[trim=4cm 2cm 7cm 3cm, clip=true, width=1.5in]{figures/pouring_specific_diagram.pdf}
+\caption{Pouring geometry used to represent analytical model in few, easily measured states.}
+\label{fig:specific_diagram}
+\end{figure}
+
+\begin{comment}
+b) present thrm and proof that this model provides desired simplification:
+	Thm1: Rectangular container \alpha parameterized by (H_\alpha, L_{L,\alpha},W,l,\theta) allows for the representation of the entire system state solely in the measured height and of the fluid in the poured to flask h, its derivative \dot{h}, angle of the poured container and wrist $\theta$ with input being angular velocity of the wrist $\omega$.
+Proof: substitution of analytical model to represent dynamics in only these terms
+
+c) Present thrm and proof that this model stays within the controllable region with our hybrid control structure given it starts in the required domain.
+	Thm2: The proposed analytical model and resultant feedback control is valid in the domain $D_0$ specified by non-zero $x_2 = \dot{h} \neq 0$, and $x_3 = \theta \in (-\frac{\pi}{2}, \frac{\pi}{2})$. And our hybrid control keeps the system in $D_0$, for states starting within D_0 and the point (x_1, x_2=0, x_3=0).
+  Proof: represent system states (x1,x2,x3) =(h,dh,th), provide domain for feedback linearization {x2!=0, x2&x3 !=0 simultaneously, x1 in (-pi/2,pi/2)}
+\end{comment}
+
+Given these parameterizations, we will now show that the design configuration in Figure \ref{fig:specific_diagram} allows for a concise representation of the dynamical system in Equation \eqref{eqn:gen_flowrate_expanded} in Proposition \eqref{prop:design}.
+\begin{proposition}\label{prop:design}
+By using an open, rectangular pouring container $\alpha$ as shown in Figure \ref{fig:specific_diagram}, and container $\beta$ with constant cross sectional area $A_{\beta}$, we can represent Equation \eqref{eqn:gen_flowrate_expanded} in terms of only transient variables $h_{\beta}, \dot{h}_{\beta}, \theta, \omega$.
+\end{proposition}
+%show proposition
+\begin{proof}
+Using Equations \eqref{eqn:rect_lip}, \eqref{eqn:flowrate_rect_case}, \eqref{eqn:flowrate_derivative_rect_case}, \eqref{eqn:hla_dot}, \eqref{eqn:dividing_area_rect}, \eqref{eqn:dividing_area_rect_diff}, \eqref{eqn:rect_Vs_diff} assuming constant $A_{\beta}$, Equation \eqref{eqn:gen_flowrate_expanded} becomes Equation \eqref{eqn:flowrate_substituted_first_order}. 
+\begin{align}
+q&= - \left( \left( \frac{2}{3} \right)^{\frac{1}{3}} L_{L,\alpha}^{-\frac{2}{3}} (2g)^{-\frac{1}{3}} q^{-\frac{1}{3}} \dot{q} \right) \left(  W_{\alpha} l_{\alpha} sec(\theta)  \right) \nonumber \\
+&- \left( \left( \frac{3}{2} \right)^{\frac{2}{3}} L_{L,\alpha}^{-\frac{2}{3}} (2g)^{-\frac{1}{3}} q^{\frac{2}{3}} \right) \left( W_{\alpha} l_{\alpha} tan(\theta) sec(\theta) \omega \right) \nonumber \\
+&+ \frac{l_{\alpha}^2 W_{\alpha}}{2} sec^2(\theta) \omega \label{eqn:flowrate_substituted_first_order}
+\end{align}
+Solving for $\dot{q}$ produces Equation \eqref{eqn:dynamics_in_flowrate_only}.
+\begin{align}
+\dot{q} &= - 3^{\frac{1}{3}} L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}}  W_{\alpha} l_{\alpha} sec(\theta) q^{\frac{4}{3}} \nonumber \\
+&- \frac{3}{2} tan(\theta) q \omega \nonumber \\
+&+ \left( \frac{3}{8} \right)^{\frac{1}{3}}  l_{\alpha} sec(\theta) L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}} q^{\frac{1}{3}} \omega \label{eqn:dynamics_in_flowrate_only}
+\end{align}
+Using the relation in Equation \eqref{eqn:flowrate_second_order_h} we obtain the relation between $\dot{q}$ and $\ddot{h}_{\beta}$.
+\begin{equation}
+\dot{q} = A_{\beta} \ddot{h}_{\beta}
+\label{eqn:flowrate_second_order_h}
+\end{equation}
+Substituting Equation \eqref{eqn:flowrate_second_order_h} and $q = A_{\beta} \dot{h}_{\beta}$ into Equation \eqref{eqn:flowrate_substituted_first_order} produces Equation \eqref{eqn:flowrate_substituted_second_order} whose transient terms are only $h_{\beta},\dot{h}_{\beta},\theta,\omega$.
+\begin{align}
+\ddot{h}_{\beta} &= - 3^{\frac{1}{3}} L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}}  W_{\alpha} l_{\alpha} sec(\theta) A_{\beta}^{\frac{1}{3}} \dot{h}_{\beta}^{\frac{4}{3}} \nonumber \\
+&- \frac{3}{2} tan(\theta) \dot{h}_{\beta} \omega \nonumber \\
+&+ \left( \frac{3}{8} \right)^{\frac{1}{3}}  l_{\alpha} sec(\theta) L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}} A_{\beta}^{\frac{-2}{3}} \dot{h}_{\beta}^{\frac{1}{3}} \omega  \label{eqn:flowrate_substituted_second_order}
+\end{align}
+We define $Q_1(\theta), Q_2(\theta), Q_3(\theta)$
+
+\begin{align}
+Q_1(\theta) &=  - 3^{\frac{1}{3}} L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}}  W_{\alpha} l_{\alpha} sec(\theta)  \\
+Q_2(\theta) &= - \frac{3}{2} tan(\theta)  \\
+Q_3(\theta) &= \left( \frac{3}{8} \right)^{\frac{1}{3}}  l_{\alpha} sec(\theta) L_{L,\alpha}^{\frac{2}{3}} g^{\frac{1}{3}} 
+\end{align}
+Which simplifies Equation \eqref{eqn:flowrate_substituted_second_order} to Equation \eqref{eqn:main_second_order_response}.
+\begin{equation}
+\ddot{h}_{\beta} =Q_1(\theta) A_{\beta}^{\frac{1}{3}} \dot{h}_{\beta}^{\frac{4}{3}} + \left( Q_2(\theta) \dot{h}_{\beta}  + Q_3(\theta) A_{\beta}^{-\frac{2}{3}} \dot{h}_{\beta}^{\frac{1}{3}} \right) \omega
+\label{eqn:main_second_order_response}
+\end{equation}
+\end{proof}
+
+\begin{comment}
+c) Present thrm and proof that this model stays within the controllable region with our hybrid control structure given it starts in the required domain.
+	Thm2: The proposed analytical model and resultant feedback control is valid in the domain $D_0$ specified by non-zero $x_2 = \dot{h} \neq 0$, and $x_3 = \theta \in (-\frac{\pi}{2}, \frac{\pi}{2})$. And our hybrid control keeps the system in $D_0$, for states starting within D_0 and the point (x_1, x_2=0, x_3=0).
+  Proof: represent system states (x1,x2,x3) =(h,dh,th), provide domain for feedback linearization {x2!=0, x2&x3 !=0 simultaneously, x1 in (-pi/2,pi/2)}
+\end{comment}
+
+With these design parameters we have derived a component of the system dynamics, we now define the region on which it is controllable and the hybrid controller used. 
+
+\begin{theorem}\label{thrm:con}
+For a experimental setup defined in Proposition \ref{prop:design}, with system states $ \begin{bmatrix} x_1 & x_2 & x_3 \end{bmatrix}^T = \begin{bmatrix} h_{\beta} & \dot{h}_{\beta} & \theta \end{bmatrix}^T$ and input $u = \omega$, $\exists$ a hybrid control input that allows for control of the system in the domain $\mathcal{D}: x_3 \in (-\frac{\pi}{2}, \frac{\pi}{2})$ for states $\vec{x}_0$ starting in $\mathcal{D}$. 
+\end{theorem}
+\begin{proof}
+The full system dynamics based on Equation \eqref{eqn:main_second_order_response} is 
+shown in Equation \eqref{eqn:system_dynamics}.
+\begin{equation}
+\begin{bmatrix}
+\dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 
+\end{bmatrix} = \begin{bmatrix}
+|x_2| \\ Q_1(x_3)A^{\frac{1}{3}} x_2^{\frac{4}{3}} \\ 0
+\end{bmatrix} + \begin{bmatrix}
+0 \\ Q_2(x_3) x_2 + Q_3(x_3) A^{-\frac{2}{3}} x_2^{\frac{1}{3}} \\ 1
+\end{bmatrix} u
+\label{eqn:system_dynamics}
+\end{equation}
+which takes the general form $\dot{x} = f(x) + g(x)u$. To determine the region on which this is feedback linearizable we must determine the conditions of full rank for the matrix $M$ defined in Equation \eqref{eqn:fb_linearizable_mat}, where $ad_f g(x)$ represents the adjoint $[f,g]$ (lie bracket). And is also feedback linearizable if the span $M$'s vectors are involutive. 
+\begin{equation}
+M = \begin{bmatrix}
+g(x) & ad_f g(x) & ad_f^2 g(x)
+\end{bmatrix} \label{eqn:fb_linearizable_mat}
+\end{equation}
+The matrix $M$ has full rank when $x_2 \neq 0$, meaning the height must be changing. Also we can see by inspection that $g(x)$ is only left invertible when $x_3 \neq -\frac{\pi}{2}$ or $x_3 \neq \frac{\pi}{2}$. Hence we propose the following hybrid controller in Equation \eqref{eqn:hybrid_controller}.
+\begin{equation}
+u = 
+\begin{cases} 
+g(x)^{\dagger}( \tau - f(x)) & x_2 \neq 0 \textit{ and } x_3 \in (-\frac{\pi}{2}, \frac{\pi}{2}) \\
+sgn (x_3)\delta_{\omega} & x_2 = 0 \textit{ and } x_3 \in (-\frac{\pi}{2}, \frac{\pi}{2}) \\
+0 & x_3 \not\in (-\frac{\pi}{2}, \frac{\pi}{2})
+\end{cases}
+\label{eqn:hybrid_controller}
+\end{equation}
+Where the domain conditions here serve as Hybrid control Guards and Resets functions constraints, and functions are an identity map. Using feedback linearization the system reduces to a second order ordinary differential equation, and solving for the desired state $x_1$ will exponentially approach the desired point also in $D$ for positive proportional and derivative gains $K_p, Kd$.  We define the term $\tau$ to be this input, and have it consist of a feedback and feed forward term prescribed by the desired trajectory of $x_1(t)$ as shown in Equation \eqref{eqn:min_jerk_traj}.
+\begin{equation}
+\tau = \ddot{x}_{1,des} + K_p (x_{1,des} - x_1) + K_d(\dot{x}_{1,des} - \dot{x}_1) \label{eqn:min_jerk_traj}
+\end{equation}
+
+The desired trajectory for the system is a minimum jerk trajectory for the state $x_1$ which defines $\ddot{x}_{1,des},\dot{x}_{1,des}, x_{1,des}$ where $\ddot{x}_{1,des}$ is the feed forward term. We define a smooth, sigmoid trajectory for the fluid height by using a 5th order polynomial. Such a polynomial with specified end points characterizes a minimum jerk trajectory, and inherently minimizes the change in accelerations while respecting the boundary constraints. The specified endpoints are the initial height, zero velocity and acceleration and final height, zero velocity and acceleration. These boundary constraints fully define the trajectory in closed form \cite{zefran1998generation}. Therefore with Equations \eqref{eqn:hybrid_controller}, \eqref{eqn:min_jerk_traj} we can track the specified trajectory in domain D.
+\end{proof}
+
+
+
+
+\subsection{Visual Feedback}\label{sec:Visual_Feed}
+
+{\color{red} FILL IN DETAILS OF FINAL VISION METHOD}
+
+
+
+
+
+\section{Results and Discussion}\label{sec:ResDis}
+\begin{comment}
+Outline: 
+1. Show general experimental setup
+2. *Present figure of accuracy of line detection vs Scale data (with stats between the two for 10 pours, collected off of later dataset): err between the two average and std_dev for 10 trials) (with camera sample at same hz, 5hz as scale)
+3. Present Pouring Accuracy:
+  a) Robustness to pouring time
+  	i) 8sec trajectory pour (50, 100, 150ml) 
+    ii) 10sec trajectory pour (50, 100, 150ml)
+    iii) 12sec trajectory pour (50, 100, 150ml)
+  b) General Repeatability and Statistics
+  	i) 100ml, 10sec, 10-20 trials, presenting avg and 1std-deviation
+
+4. Discussion 
+  a) Reliability of vision to detect height (considerations e.g. placing closer, background importance/color detection) 
+  b) Reliability of Pouring Model
+  	i) behavior near singularities
+    ii) reliance on constant hdot, mdot, x2  for feedback linearization, to overcome this we had small constant positive ang vel to compensate zero, or undetectable hdot. 
+    iii) Requirement for model accuracy (knowing the dimensions of container), height above the pouring fluid: $x_1 = \sqrt{x_2^2 + 2g(s_0 - x1)}$ but for small pours these were determined to be negligible 
+\end{comment}
+
+
+
+
+
+
+
+\begin{figure}[ht]
+    \centering
+\includegraphics[trim=6.cm 2.5cm 6.3cm 2.cm, clip=true, width=2.5in]{figures/expsetup2.jpg}
+    \caption{We use the Rethink Robotics Saywer manipulator to precisely pour colored water into a beaker using visual feedback from a mvBluefox MLC202bc camera.}
+\label{fig:expsetup1}
+\end{figure}
+
+
+
+
+\section{CONCLUSIONS}
+
+1.  We perform closed form autonomous pouring using solely visual feedback. We showed our methods reliability for a range of pouring amounts and trajectories. 
+2. Method relies on known container geometry (here we used a rectangular container).
+3. We are currently pursuing an adaptive control strategy that is  agnostic to the geometry of the containers, and can pour precisely on first pour.
+
+%\addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
+                                  % on the last page of the document manually. It shortens
+                                  % the textheight of the last page by a suitable amount.
+                                  % This command does not take effect until the next page
+                                  % so it should come on the page before the last. Make
+                                  % sure that you do not shorten the textheight too much.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section*{APPENDIX}
+% Citing: \nocite{*}
+
+% Appendixes should appear before the acknowledgment.
+
+\section*{ACKNOWLEDGMENT}
+
+The first author was supported by the NSF Graduate Fellowship DGE-1321851.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,pouring}
+
+
+
+\end{document}

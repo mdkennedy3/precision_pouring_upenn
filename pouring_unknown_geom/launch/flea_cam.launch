@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <include file="$(find flea3)/launch/single_node.launch">
+    <arg name="device" value="13344889"/>
+    <arg name="rate" value="30"/>
+    <arg name="auto_exposure" value="true"/>
+    <arg name="exposure_value" value="0.0"/>
+    <arg name="auto_shutter" value="false"/>
+    <arg name="shutter_ms" value="2"/>
+    <arg name="auto_gain" value="false"/>
+    <arg name="gain_db" value="0.0"/>
+    <!--<arg name="calib_url" value="file://$(find iiwa_pouring)/launch/calibration_files/point_grey_calib.yaml"/> -->
+  </include>
+
+
+</launch>
+

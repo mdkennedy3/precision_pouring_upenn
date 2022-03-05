@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="true"/>
+  <arg name="data_name" default="model_pred_test" />
+  <arg name="data_trial" default="001" />
+  <arg name="data_volume" default="100ml" />
+
+
+  <node pkg="rosbag" type="record"  name="rosbag_record"
+  args="-O $(find pouring_unknown_geom)/bagfiles/$(arg data_name)_trial_$(arg data_trial)_$(arg data_volume).bag
+  /pouring_control/Pour_Model_opt
+  /pouring_control/pouring_msg
+  /pouring_control/pour_vol_ang
+  /pouring_control/pour_angle_state
+  /pouring_control/arduino_scale
+  /pouring_control/model_volume_output
+  /pouring_control/Hybrid_controller_data
+  /pouring_control/mh_mh_dot
+  /pouring_control/time_delay_msg
+
+  /pouring_control/container_training_edge_profile_pub_msg
+  /pouring_control/container_edge_profile_pub_msg
+
+  /pouring_control/gp_selected_models_edge_profile
+  /pouring_control/gp_selected_models
+
+  /robot/limb/right/joint_command
+  /robot/joint_states
+
+  /pouring_control/filtered_cup_cloud
+  /pouring_control/container_estimated_cloud
+  "
+  if="$(arg save_data)"/>
+
+
+</launch>
+

@@ -1,0 +1,9 @@
+Header header
+float64[] coef_opt
+float64[] domain
+float64 residual_avg
+float64 residual_std
+string type
+pouring_msgs/GPVolumeModel[] gp_volume_models
+string volume_solution_mode
+float64 lowest_model_rmse

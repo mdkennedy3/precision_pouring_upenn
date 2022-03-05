@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<arg name="id" default="000" />
+
+
+<node pkg="pouring_unknown_geom" type="track_angle.py" name="angle_tracker" ns="/iiwa" output="screen" args="$(arg id)" />
+<node pkg="pouring_unknown_geom" type="iiwa_pouring_main.py" name="pouring_node" ns="/iiwa" output="screen"/>
+<node pkg="usb_scale" type="usb_scale_node" name="usb_scale" output="log"  />
+
+</launch>
+

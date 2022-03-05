@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+<node name='grippers_node'   pkg='intera_examples'  type='gripper_cuff_control.py' />
+
+</launch>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="just_scan_dont_move" default="false"/>
+
+<node pkg="pouring_unknown_geom" name="profile_scanner_triggers" type="profile_scanner_triggers.py" output="screen" if="$(arg just_scan_dont_move)"/>
+
+<group ns="pouring_control" clear_params="false">
+ <include file="$(find pouring_unknown_geom)/launch/container_profile_extractor.launch"/>
+</group>
+
+
+ <arg name="setup_motions_bool" default="false"/>
+  <node pkg="pouring_unknown_geom" name="setup_motions_node" type="setup_motions.py" output="screen" if="$(arg setup_motions_bool)"/>
+
+
+</launch>
+

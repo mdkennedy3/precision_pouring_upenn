@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="detector_nn" default="true"/>
+
+<group ns="pouring_control" clear_params="false">
+
+  <arg name="robot_ns" default="robot"/>  <!--iiwa or robot (for sawyer) -->
+
+  <arg name="flea_device" value="13344889"/>
+  <arg name="camera" default="pg_$(arg flea_device)"/>
+  <arg name="image_topic" default="$(arg camera)/image_raw"/>
+
+  <arg name='ml_des_volume' default='100'/>
+
+  <!-- Find height in cm to pass to liquid detect to draw target line -->
+  <!-- For plastic contiainer 100ml is 3.147cm, for glass it is 2.4cm -->
+  <!-- Must be set manually: Vol_ml/Area :: default for 100ml -->
+  <!-- <arg name="des_height_cm" default="2.85"/> -->
+   <arg name="des_height_cm" default="2.4"/> 
+
+  <!--height for glass cylinder 0.089m tagsize: 0.017, yoffset was 40 but that was too low, area 41.6666-->
+  <!--Front tag0 was 0.02m and height of 0.091 in front -->
+  <!-- New plastic reciever height is 7.55cm, tagsize = 0.0192cm, Area: 38.515cm**2 , yoffset was 20, xoffset 50 (still got jumpts)-->
+  <arg name="receiving_cup_glass" default="true"/> <!-- choose which glass -->
+
+  <arg name="apriltag_id" default="4"/>
+  <arg name="apriltag_size" default="0.03" />
+ <arg name="cylinder_height" default="0.08"/> 
+
+  <group unless="$(arg receiving_cup_glass)">
+    <arg name="apriltag_size" value="0.03"/>
+    <arg name="cylinder_height" value="0.08"/>  <!-- was 0.084 -->
+  </group>
+
+  <arg name="start_j6_angle" default="0"/>
+
+  <!-- Time delay in seconds (1,2,3): param used in control and model creation (otherwise mult. Vol for same angle can occur) -->
+  <arg name="pour_time_delay" default="1.5"/>
+
+  <!-- Set this paramater for estimated initial volume of fluid in container (in ml) -->
+  <arg name="container_estimated_initial_volume" default="150.0"/>
+
+  <!--volume lowpass filter V* = a*V_i + (1-a)V_{i-1} :: was 0.8 -->
+  <arg name="mh_low_pass_filter_constant" default="0.8"/>
+
+  <!--For plastic continaer: 35.08, for Glass 41.66  cm^2-->
+  <!-- <arg name="recieving_container_area" default="41.66"/> -->
+  <arg name="recieving_container_area" default="0.005296"/> <!--units are in meters -->
+
+  <!-- To display controller video -->
+  <arg name="controller_output_bool" default="true" />
+
+  <arg name="volume_solution_mode" default="param" /> <!--param, semiparam, nonparam -->
+
+<!--New arduino scale -->
+  <include file="$(find pouring_unknown_geom)/launch/arduino_scale.launch" />
+  <!--Measurement node with kalman filter for combining vision -->
+  <node name='measurement_node' pkg='pouring_control_pkg' type='meas_state_node_vision_and_scale_kf' output='screen'>
+    <param name="recieving_container_area" type="double" value="$(arg recieving_container_area)"/>
+    <param name="mh_low_pass_filter_constant" type="double" value="$(arg mh_low_pass_filter_constant)"/>
+    <remap from="~LDHeight"  to="LDHeight" />
+    <remap from="~arduino_scale"  to="arduino_scale"/>
+    <remap from="~mh_mh_dot"  to="mh_mh_dot" />
+    <remap from="~tare_scale_serv"  to="tare_scale_serv" />
+  </node>
+
+  <!-- Runs the camera drivers -->
+  <include file="$(find flea3)/launch/single_node.launch">
+    <arg name="device" value="13344889"/>
+    <arg name="rate" value="30"/>
+    <arg name="auto_exposure" value="true"/>
+    <arg name="exposure_value" value="0.0"/>
+    <arg name="auto_shutter" value="false"/>
+    <arg name="shutter_ms" value="2"/>
+    <arg name="auto_gain" value="false"/>
+    <arg name="gain_db" value="0.0"/>
+   <arg name="calib_url" value="file://$(find pouring_unknown_geom)/config/point_grey_calib_16mm.yaml"/>
+  </include>
+
+  <!-- Runs the Apriltag node -->
+  <node pkg="apriltag_ros" type="apriltag_detector_node"
+    name="apriltag_detector" output="screen">
+    <param name="family" type="int" value="0"/>
+    <param name="type" type="int" value="0"/>
+    <param name="black_border" type="int" value="2"/>
+    <remap from="~image" to="$(arg image_topic)"/>
+    <remap from="~apriltags" to="apriltags"/>
+    <remap from="~tags" to="apriltags"/>
+    <remap from="~image_detection" to="image_detection"/>
+  </node>
+
+  <include file="$(find pouring_unknown_geom)/launch/pose_estimator.launch">
+    <arg name="image" value="$(arg image_topic)"/>
+    <arg name="camera_info" value="$(arg camera)/camera_info"/>
+    <arg name="tags" value="apriltags"/>
+  </include>
+
+  <node pkg="nn_predictors" type="wait_time_predictor.py" name="wait_time_predictor" output="screen"/>
+
+  <group if="$(arg detector_nn)">
+    <node name='level_detector_node_nn' pkg='liquid_level_detection_nn' type='level_detect_node_nn' output="screen">
+      <param name="desired_height_cm" type="double" value="$(arg des_height_cm)"/>
+      <param name="apriltag_cut_area" type="double" value="0.025"/>
+
+      <param name="recieving_container_area" type="double" value="$(arg recieving_container_area)"/>
+
+      <param name="apriltag_id" type="int" value="$(arg apriltag_id)"/>
+      <param name="apriltag_size" type="double" value="$(arg apriltag_size)"/>
+      <param name="cylinder_height" type="double" value="$(arg cylinder_height)"/>
+      <param name="x_offset_pix" type="int" value="200"/>
+      <param name="y_offset_pix" type="int" value="80"/>
+      <param name="background_sub_history" type="int" value="250"/>
+      <param name="background_sub_threshold" type="int" value="16"/>
+      <param name="debug" type="bool" value="false"/>
+      <remap from="~display_image" to="$(arg image_topic)"/>
+      <remap from="~image" to="/hed_level_detector/output"/>
+      <remap from="~detected_height" to="LDHeight"/>
+      <remap from="apriltags" to="apriltags"/>
+      <remap from="~LDOutput" to="LDOutput"/>
+      <remap from="~LDOutput_fg" to="LDOutput_fg"/>
+    </node>
+
+<!--   <node name="docker_wrapper" pkg="liquid_level_detection_nn" type="detector.py" respawn="true" output="screen"> -->
+   <node name="docker_wrapper" pkg="liquid_level_detection_nn" type="detector_no_docker.py" respawn="true" output="screen"> 
+      <remap from="/pg_13344889/image_raw" to="$(arg image_topic)"/>
+      <remap from="/pg_13344889/tags" to="/pouring_control/apriltags"/>
+      <param name="apriltag_id" type="int" value="$(arg apriltag_id)"/>
+    </node>
+  </group>
+  <!--change back to unless: -->
+  <group unless="$(arg detector_nn)">
+    <node name='level_detector_node_cpp' pkg='liquid_level_detection' type='level_detect_node' output="screen">
+      <param name="desired_height_cm" type="double" value="$(arg des_height_cm)"/>
+      <param name="apriltag_cut_area" type="double" value="0.025"/>
+
+      <param name="apriltag_id" type="int" value="$(arg apriltag_id)"/>
+      <param name="apriltag_size" type="double" value="$(arg apriltag_size)"/>
+      <param name="cylinder_height" type="double" value="$(arg cylinder_height)"/>
+      <param name="x_offset_pix" type="int" value="50"/>
+      <param name="y_offset_pix" type="int" value="20"/>
+      <param name="debug" type="bool" value="false"/>
+      <remap from="~image" to="$(arg image_topic)"/>
+      <remap from="~detected_height" to="LDHeight"/>
+      <remap from="~LDOutput" to="LDOutput"/>
+      <remap from="~LDOutput_fg" to="LDOutput_fg"/>
+      <remap from="~apriltags" to="apriltags"/>
+    </node>
+
+  </group>
+
+</group>
+</launch>
+
+<!--to pour quickly just use run_simple_pour.py -->
+
+

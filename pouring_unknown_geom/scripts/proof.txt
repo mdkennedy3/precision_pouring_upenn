@@ -1,0 +1,14 @@
+what are legendre
+how does it relate to volume
+
+theorem: 
+If two containers sit on the same legendre vector iff their geometry functions are scalar multiples
+
+prove sufficiency and neccessity: sufficient that Vi = kVj  then ri = k rj neccessity, if 
+
+A: containrs are scaled  B: containers sit on same vector  
+if A then B 
+if B then A
+
+proving suff and necc then iff A then B
+

@@ -1,0 +1,1 @@
+rosbag play constant_pour_for_debug_trial_001.bag --topics /robot/joint_states /mh_mh_dot /h_filtered /Pour_Model_opt /model_volume_output

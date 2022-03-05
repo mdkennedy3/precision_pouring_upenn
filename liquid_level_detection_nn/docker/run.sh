@@ -1,0 +1,1 @@
+nvidia-docker run -v /home/karl/catkin_ws/src/pouringproject/liquid_level_detection_nn/docker:/volume -u `id -u` pytorch_liquid_level:0.1

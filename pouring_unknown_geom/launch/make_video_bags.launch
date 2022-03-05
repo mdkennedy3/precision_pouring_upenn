@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Run the original rosbag -->
+  <arg name='bagname' default='bag.bag'/>  
+  <node pkg="rosbag" type="play" name="bag_playback" args="$(find pouring_unknown_geom)/bagfiles/$(arg bagname) --topics   /Pour_Model_opt
+  /pouring_msg
+  /pour_vol_ang
+  /des_height
+  /robot/joint_states
+  /mh_mh_dot
+  /scale_node/scale
+  /robot/limb/right/joint_command
+  /h_filtered
+  /LDHeight
+  /raw_h_ml
+  /raw_h_clust_ml
+  /model_volume_output
+  /Hybrid_controller_data
+  /pg_13344889/camera_info
+  /pg_13344889/image_raw   " />
+
+
+  <!-- Run the detector -->
+  <!-- Initialize the setup -->
+  <arg name='init_bool' default='true'/>
+  <arg name='ml' default='100'/>
+  <arg name="des_height_cm" default="2.85"/>  <!-- Must be set manually: Vol_ml/Area :: default for 100ml -->
+  <arg name="recieving_container_area" default="35.0877"/> <!--For plastic continaer: 35.08, for Glass 41.66 -->
+  <arg name="flea_bool" default='true' />
+  <arg name="bluefox_bool" default="false"/>
+  <rosparam param="ml_des_volume" subst_value="True">$(arg ml)</rosparam>  <!-- This is also used in the controller -->
+  <rosparam param="desired_volume_ml" subst_value="True">$(arg ml)</rosparam>
+  <rosparam param="recieving_container_area" subst_value="True">$(arg recieving_container_area)</rosparam>  
+
+ <arg name="pour_time_delay" default="1.5"/>  <!-- Time delay in seconds (1,2,3): param used in control and model creation (otherwise mult. Vol for same angle can occur) -->
+  <rosparam param="pour_time_delay" subst_value="True">$(arg pour_time_delay)</rosparam>
+
+  <arg name="mh_low_pass_filter_constant" default="0.8"/>
+  <rosparam param="mh_low_pass_filter_constant" subst_value="True">$(arg mh_low_pass_filter_constant)</rosparam>
+
+
+  <include file="$(find liquid_level_detection)/launch/bagplay_liquid_level_detect.launch" >
+    <arg name="flea3" value="$(arg flea_bool)"/>
+    <arg name="bluefox" value="$(arg bluefox_bool)"/>
+    <arg name="des_height_cm" value="$(arg des_height_cm)"/>
+  </include>
+  <arg name="disp_pour_head" default="true" />
+  <arg name="head_video_feed" default="/LDOutput" />
+  <node name="disp_live_image_on_head" pkg="pouring_unknown_geom" type="intera_head_video.py" if="$(arg disp_pour_head)">
+  <remap from="input_img" to="$(arg head_video_feed)" />
+  </node>
+
+
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="true"/>
+  <arg name="data_name" default="bag_expanded" />
+  <arg name="data_trial" default="001" />
+
+  <node pkg="rosbag" type="record"  name="rosbag_se2planning"
+  args="-O $(find pouring_unknown_geom)/bagfiles/$(arg data_name)_trial_$(arg data_trial).bag
+  /Pour_Model_opt
+  /pouring_msg
+  /pour_vol_ang
+  /des_height
+  /robot/joint_states
+  /mh_mh_dot
+  /scale_node/scale
+  /robot/limb/right/joint_command
+  /h_filtered
+  /LDHeight
+  /raw_h_ml
+  /raw_h_clust_ml
+  /model_volume_output
+  /robot/head_display
+  /Hybrid_controller_data
+  /pg_13344889/camera_info
+  /pg_13344889/image_raw 
+  /LDOutput_fg
+  /LDOutput
+  /camera/apriltags/
+  /camera/image_detection
+  "
+  if="$(arg save_data)"/>
+
+<!-- 
+topics not included:
+  /pg_13344889/camera_info
+  /pg_13344889/image_raw 
+  /LDOutput_fg
+  /LDOutput
+  /camera/apriltags/
+  /camera/image_detection
+-->
+
+
+
+</launch>

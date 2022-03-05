@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <arg name='ml' default='100'/>
+    <arg name='traj_time' default='10'/>
+
+    <node name='main_node'   pkg='pouring_control_pkg'  type='main.py' output='screen'  args="-d $(arg ml) -t $(arg traj_time)"/>
+
+    <arg name="save_data" default="false"/>
+    <arg name="data_name" default="100ml"/>
+    <arg name="data_trial" default="1"/>
+
+    <!-- Save Data for each run -->
+
+    <node pkg="rosbag" type="record"  name="rosbag_se2planning"
+    args="-O $(find pouring_control_pkg)/bagfiles/$(arg data_name)_trial_$(arg data_trial).bag  
+    /des_height
+    /robot/joint_states
+    /mh_mh_dot
+    /scale_node/scale
+    /robot/limb/right/joint_command
+    /h_filtered
+    /camera/apriltags/
+    /LDHeight
+    /LDOutput
+    /camera/image_detection
+    /LDOutput_fg
+    /raw_h_ml
+    /raw_h_clust_ml
+    "
+    if="$(arg save_data)"/>
+
+</launch>
+

@@ -1,0 +1,17 @@
+string world_frame
+string camera_frame
+string pour_side
+string beaker_tag_frame
+string pouring_cup_frame
+
+float64 start_angle
+float64 cup_edge_to_finger_distance
+float64 robot_finger_safety_distance
+float64 z_world_beaker
+float64 receiving_beaker_radius
+float64 pour_past_edge_distance
+
+bool generate_guard_bool
+
+---
+bool success

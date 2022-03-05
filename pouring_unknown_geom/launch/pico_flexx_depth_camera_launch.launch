@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+  <include file="$(find pico_flexx_driver)/launch/monstar.launch"/>
+
+  <node name="fla_depth_camera_pico_flexx" pkg="rviz" type="rviz" respawn="false" args="-d $(find pouring_unknown_geom)/launch/rviz/fla_camera.rviz" />
+
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="fla_camera_link_load_broadcaster" args="0 0 0.0 0.5 0.5 0.5 0.5 pico_camera_link fla/rgbd " />
+  
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="fla_camera_link_load_broadcaster" args="0 0 0.0 0.5 0.5 0.5 0.5 camera_link fla/rgbd " /> -->
+  <!--https://www.andre-gaschler.com/rotationconverter/ -->
+</launch>

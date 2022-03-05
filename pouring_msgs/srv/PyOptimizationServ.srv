@@ -1,0 +1,7 @@
+float64[] vol_data
+float64[] ang_data
+float64[] coef_init
+---
+float64[] coef_opt
+float64 resid_avg
+float64 resid_std

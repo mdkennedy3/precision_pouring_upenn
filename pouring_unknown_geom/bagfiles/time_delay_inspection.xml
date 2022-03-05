@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget parent="main_window" name="Main Window">
+  <plotmatrix rows="3" tab_name="plot" columns="1">
+   <plot row="0" col="0">
+    <range right="64.073386" left="0.006708" top="110.177633" bottom="-3.568137"/>
+    <limitY/>
+    <curve G="0" R="0" name="/pouring_control/mh_mh_dot/mh" B="255"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0">
+    <range right="64.049459" left="0.079617" top="0.649637" bottom="-0.560305"/>
+    <limitY/>
+    <curve G="128" R="0" name="/robot/joint_states/right_j6/pos" B="0"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0">
+    <range right="64.038808" left="0.000000" top="1.693381" bottom="0.468618"/>
+    <limitY/>
+    <curve G="0" R="255" name="/pouring_control/time_delay_msg/time_delay" B="0"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <currentPlotMatrix index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <Plugins>
+  <DataLoad_CSV>
+   <default time_axis=""/>
+  </DataLoad_CSV>
+  <DataLoad_ROS_bags>
+   <selected_topics list="/pouring_control/Hybrid_controller_data;/pouring_control/mh_mh_dot;/pouring_control/pour_angle_state;/robot/joint_states;/pouring_control/time_delay_msg"/>
+  </DataLoad_ROS_bags>
+  <ROS_Topic_Streamer>
+   <selected_topics list=""/>
+  </ROS_Topic_Streamer>
+  <RosoutPublisherROS/>
+  <TopicPublisherROS/>
+ </Plugins>
+ <previouslyLoadedDatafile filename="/home/mrsl_skull1/ws_kia/src/pouringproject/pouring_unknown_geom/bagfiles/tall_flask_new_td_calc_trial_001.bag"/>
+</root>
+

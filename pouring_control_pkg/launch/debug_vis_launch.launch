@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+<!--target mass in grams/ml -->
+<!-- <arg name='ml' default='100'/> -->
+
+<!-- <node name='pub_des_height' pkg='pouring_control_pkg' type='pub_desired_height.py' args="-d $(arg ml)" output='screen'/> -->
+
+
+<!-- For visualization with kinect -->
+<arg name="vis_side" default="-selection R"/> 
+<include file="$(find liquid_level_detection)/launch/liquid_detect.launch" args="$(arg vis_side)"/>
+
+
+
+    <arg name="save_data" default="true"/>
+    <arg name="data_name" default="debug_vis"/>
+    <arg name="data_trial" default="1"/>
+
+    <!-- Save Data for each run -->
+
+    <node pkg="rosbag" type="play"  name="rosbag_se2planning" args=" ~/Desktop/test_pouring.bag "/>
+
+
+
+
+
+</launch>

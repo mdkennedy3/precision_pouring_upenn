@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<include file="$(find sawyer_gazebo)/launch/sawyer_world.launch">
+ <arg name="electric_gripper" value="true"/>
+</include>
+
+<node pkg="rviz" type="rviz" name="rviz_sawyer" args="-d $(find pouring_unknown_geom)/launch/sawyer_cup_ref_frame.rviz" />
+
+</launch>

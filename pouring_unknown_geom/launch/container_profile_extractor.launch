@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="pico_camera_tf_broadcaster" args="0.06 0.0 0 1.57 0 0 right_hand pico_camera_link 100" />
+  <!-- <node pkg="tf" type="static_transform_publisher" name="fla_tf_broadcaster" args="0.0 0.0 0 0 0 0 pico_camera_link fla/rgbd 100" /> -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="fla_camera_link_load_broadcaster" args="0 0 0.0 0.5 0.5 0.5 0.5 pico_camera_link fla/rgbd " />
+
+  <node pkg="pouring_unknown_geom" name="container_edge_profile_extractor_service" type="container_edge_profile_extractor_service" output="screen">
+    <remap from="~container_estimated_cloud" to="container_estimated_cloud" />
+    <remap from="~filtered_cup_cloud" to="filtered_cup_cloud" />
+    <remap from="~cyl_pt_axis_array" to="cyl_pt_axis_array" />
+    <remap from="~table_vector" to="table_vector" />
+    <remap from="~container_edge_profile" to="container_edge_profile" />
+    <remap from="~gp_edge_profile_gen_serv" to="gp_edge_profile_gen_serv" />
+    <remap from="~show_final_profile" to="show_final_profile" />
+  </node>
+
+  <node pkg="pouring_unknown_geom" name="container_edge_profile_pub_service"  type="container_edge_client_node.py" output="screen">
+   <remap from="~publish_container_profile_serv" to="publish_container_profile_serv"/>
+   <remap from="~reset_publish_container_profile_serv" to="reset_publish_container_profile_serv"/>
+    <remap from="~container_edge_profile" to="container_edge_profile" />
+  </node>
+
+
+  <node pkg="pouring_unknown_geom" name="model_prior_classification_pub" type="model_prior_classification_pub.py" output="screen">
+   <remap from="~container_edge_profile_pub_msg" to="container_edge_profile_pub_msg" />
+   <remap from="~model_prior_classificaton_serv" to="model_prior_classificaton_serv" />
+   <remap from="~reset_model_prior_classification_serv" to="reset_model_prior_classification_serv"  />
+   <remap from="~gp_selected_models" to="gp_selected_models"  />
+   <param name="number_of_final_priors"  value="10" />
+   <param name="num_profile_edge_points"  value="128" />
+  </node>
+
+
+  <node pkg="pouring_unknown_geom" name="gp_edge_profile_serv" type="GP_edge_profile_serv.py" output="screen">
+  <remap from="~gp_edge_profile_gen_serv" to="gp_edge_profile_gen_serv"/>
+  </node>
+
+</launch>
+
+
+<!--
+TO QUICKLY RUN:
+launch pouring_unknown_geom container_profile_extractor.launch 
+  rosrun pouring_unknown_geom container_edge_query.py
+rosservice call /model_prior_classificaton_serv
+-->
+

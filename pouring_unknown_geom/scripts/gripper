@@ -1,0 +1,12 @@
+# This script is a wrapper for the verbose ROS command needed to control the position of the Robotiq gripper
+# USAGE: gripper position
+
+if [ $# = 1 ]
+then
+ sleep 10s
+ rostopic pub /gripper/cmd robotiq_85_msgs/GripperCmd "{emergency_release: false, emergency_release_dir: 0, stop: false, position: $1, speed: 0.05, force: 0.01}"
+else
+ echo "Please provide a single position argument (0.1 is CLOSED)"
+fi
+
+

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pouring_msgs</name>
+  <version>0.0.0</version>
+  <description>The pouring_msgs package</description>
+
+ <maintainer email="monroe@todo.todo">monroe</maintainer>
+
+ <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>actionlib_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf_conversions</depend>
+  <depend>eigen_conversions</depend>
+  <depend>visualization_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>pcl_ros</depend>
+  <depend>pcl_conversions</depend>
+
+  <depend>libgp</depend>
+
+  <exec_depend>message_runtime</exec_depend>
+
+
+</package>

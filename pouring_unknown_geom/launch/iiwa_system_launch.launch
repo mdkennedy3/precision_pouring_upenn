@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+<!-- <arg name="sim" default="false"/> -->
+
+
+<!-- First is the grl driver -->
+<include file="$(find iiwa_hw_grl)/launch/grl_driver.launch"/>
+
+
+<!-- second is the moveit for the robotiq with grl -->
+
+<include file="$(find iiwa_robotiq_moveit)/launch/moveit_grl.launch"/>
+
+
+
+<!-- Gripper launch -->
+<include file="$(find iiwa_robotiq_moveit)/launch/robotiq.launch"/>
+
+
+
+
+
+<!-- info for gripper: -->
+<!-- rostopic pub /gripper/cmd robotiq_85_msgs/GripperCmd
+position varies from 0:0.1
+rostopic pub /gripper/cmd robotiq_85_msgs/GripperCmd "{emergency_release: false, emergency_release_dir: 1, stop: false, position: 0.1, speed: 0.2,
+  force: 100.0}"
+python cmds in robotiq_85_gripper_test.py
+ -->
+
+
+</launch>

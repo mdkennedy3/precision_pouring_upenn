@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- roslaunch iiwa_pouring pouring_model_identification.launch start_mode:=full ml:=50 des_height_cm:=1.425 -->
+  <!-- roslaunch iiwa_pouring pouring_model_identification.launch start_mode:=full ml:=100 des_height_cm:=2.85 -->
+  <!-- roslaunch iiwa_pouring pouring_model_identification.launch start_mode:=full ml:=150 des_height_cm:=4.275 -->
+
+  <!-- Set this paramater for estimated initial volume of fluid in container (in ml) -->
+  <arg name="cont_est_vol" default="150.0"/>
+  <rosparam param="container_estimated_initial_volume" subst_value="True">$(arg cont_est_vol)</rosparam>
+
+  <arg name="pour_time_delay" default="1.5"/>  <!-- Time delay in seconds (1,2,3): param used in control and model creation (otherwise mult. Vol for same angle can occur) -->
+  <rosparam param="pour_time_delay" subst_value="True">$(arg pour_time_delay)</rosparam>
+
+  <arg name="mh_low_pass_filter_constant" default="0.8"/>  <!--volume lowpass filter V* = a*V_i + (1-a)V_{i-1} :: was 0.8 -->
+  <rosparam param="mh_low_pass_filter_constant" subst_value="True">$(arg mh_low_pass_filter_constant)</rosparam>
+
+
+
+
+  <!-- Launch node to make explicit th,dv message from joint messages and filtered height -->
+  <node name="repub_angle_vol_node" pkg="pouring_unknown_geom" type="repub_angle_vol_node" />
+  <!--Launch dv publisher node (that has option to publish example data from stored file -->
+  <node name="pub_volume_for_model_node" pkg="pouring_unknown_geom" type="pub_volume_for_model.py" output='screen'/>
+  <!--Launch the model predictor node -->
+  <node name="model_selection_node" pkg="pouring_unknown_geom" type="model_selection_node.py" output='screen'/>
+  <!-- Launch model volume visualization node -->
+  <node name="visualize_model_node" pkg="pouring_unknown_geom" type="visualize_model_pred.py" output='screen'/>
+
+
+  <!-- Astra kinect -->
+  <!-- <include file="$(find astra_launch)/launch/astra.launch"/> -->
+
+
+  <!-- Initialize the setup -->
+  <arg name='init_bool' default='true'/>
+  <arg name='ml' default='100'/>
+
+  <!-- For plastic contiainer 100ml is 3.147cm, for glass it is 2.4cm -->
+  <arg name="des_height_cm" default="2.85"/>  <!-- Must be set manually: Vol_ml/Area :: default for 100ml -->
+  <rosparam param="ml_des_volume" subst_value="True">$(arg ml)</rosparam>  <!-- This is also used in the controller -->
+  
+
+  <arg name="recieving_container_area" default="41.66"/> <!--For plastic continaer: 35.08, for Glass 41.66 -->
+
+  <rosparam param="desired_volume_ml" subst_value="True">$(arg ml)</rosparam>
+
+  <arg name="receiving_cup_glass" default="true"/> <!-- choose which glass -->
+
+  <arg name='disp_image_bool' default='false'/>
+  <arg name="start_mode" default="j6" />
+  <arg name="start_j6_angle" default="2.1085830078125"/>
+  <arg name="move_to_start_position" default="true"/>
+  <include file="$(find pouring_control_pkg)/launch/initialize.launch" if="$(arg init_bool)">
+    <arg name="disp_image_bool" value="$(arg disp_image_bool)"/>
+    <arg name="ml" value="$(arg ml)"/>
+    <arg name="start_mode" value="$(arg start_mode)"/>
+    <arg name="move_to_start_position" value="$(arg move_to_start_position)"/>
+    <arg name="start_j6_angle" value="$(arg start_j6_angle)"/>
+    <arg name="des_height_cm" value="$(arg des_height_cm)"/>
+    <arg name="recieving_container_area" value="$(arg recieving_container_area)"/>
+ <arg name="receiving_cup_glass" value="$(arg receiving_cup_glass)"/>
+  </include>
+
+ 
+
+<arg name="disp_pour_head" default="false" />
+<arg name="head_video_feed" default="/LDOutput" />
+<node name="disp_live_image_on_head" pkg="iiwa_pouring" type="intera_head_video.py" if="$(arg disp_pour_head)">
+<remap from="input_img" to="$(arg head_video_feed)" />
+</node> 
+
+  <!--This creates rectified images, pg cam already has calibration file :: I put it in the pouring_control init launch -->
+  <!-- <node pkg ="image_proc" type="image_proc" name="image_proc_point_grey" ns="/pg_13344889"/> -->
+
+
+
+  <!-- Store the data (for plotting the model) -->
+  <arg name="save_data" default="false"/>
+  <arg name="data_name" default="model_pred_test" />
+  <arg name="data_trial" default="001" />
+
+  <node pkg="rosbag" type="record"  name="rosbag_record"
+  args="-O $(find pouring_unknown_geom)/bagfiles/$(arg data_name)_trial_$(arg data_trial).bag
+  /Pour_Model_opt
+  /pouring_msg
+  /pour_vol_ang
+  /des_height
+  /robot/joint_states
+  /mh_mh_dot
+  /scale_node/scale
+  /arduino_scale
+  /robot/limb/right/joint_command
+  /h_filtered
+  /camera/apriltags/
+  /LDHeight
+  /LDOutput
+  /camera/image_detection
+  /LDOutput_fg
+  /raw_h_ml
+  /raw_h_clust_ml
+  /model_volume_output
+  /robot/head_display
+  /Hybrid_controller_data
+  "
+  if="$(arg save_data)"/>
+
+
+
+</launch>
+

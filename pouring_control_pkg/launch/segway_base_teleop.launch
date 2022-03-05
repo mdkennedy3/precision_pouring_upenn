@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+<include file="$(find segway_teleop)/launch/segway_rmp.launch"/>
+
+<include file="$(find segway_teleop)/launch/teleop.launch"/>
+
+
+
+</launch>

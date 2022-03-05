@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <!-- modes: -m ['full', 'j6'] -->
+  <arg name="start_mode" default="full" />
+  <arg name="move_to_start_position" default="true"/>
+  <arg name="start_j6_angle" default="2.2"/>
+  <node name='go_to_start_pose'   pkg='pouring_control_pkg'  type='go_to_start_pose.py' args="-m $(arg start_mode)" if="$(arg move_to_start_position)" >
+    <param name="start_j6_angle" type="double" value="$(arg start_j6_angle)" />
+  </node>
+</launch>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="disp_pour_head" default="true" />
+<arg name="head_video_feed" default="/LDOutput" />
+<node name="disp_live_image_on_head" pkg="pouring_unknown_geom" type="intera_head_video.py" if="$(arg disp_pour_head)">
+<remap from="input_img" to="$(arg head_video_feed)" />
+</node>
+
+</launch>

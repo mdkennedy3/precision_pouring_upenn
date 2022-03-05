@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+ <arg name="max_abs_noise"      default="0.01"/>
+
+ <include file="$(find pico_flexx_driver)/launch/monstar.launch">
+  <arg name="max_abs_noise" default="$(arg max_abs_noise)" />
+ </include>
+
+ <include file="$(find elp_stereo_synchronized_ros_pkg)/launch/elp_stereo_camera.launch"/>
+
+ <node name="sawyer_head_display" pkg="pouring_unknown_geom" type="intera_head_video.py" />
+
+ 
+</launch>

@@ -1,0 +1,18 @@
+For iiwa motion
+1. move using full jacobian (given table height constraint)
+That leverages the fact that motion in the constrained plane near joint state: 
+---
+name: ['iiwa_joint_1', 'iiwa_joint_2', 'iiwa_joint_3', 'iiwa_joint_4', 'iiwa_joint_5', 'iiwa_joint_6', 'iiwa_joint_7']
+position: [-0.09150176399626542, 0.7297954750383377, 0.0420247220006571, -1.6239752271417247, -0.09128330671998253, -0.7977556902730472, 2.3206483722203295]
+velocity: [-0.00031069058213606567, 0.0012770585575230511, 0.0009953785390950927, -0.0006708607618108524, -0.0005106944598667359, 0.0010171502249125615, -2.1045241273177787e-06]
+effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+---
+ Is feasible, then in the frame defined at the cup edge, in this frame the velocity is \dot{x}_{cup_frame} =  [0,0,0,w,0,0]; 
+Which when transformed to iiwa base (where jacobian is defined) is \dot{x}_{base_frame} = [0,0,0, R_{BC}*[w,0,0]]  (thats rotation from cup to base frame)
+
+So next steps are 
+1. establish frame and either augment existing urdf or create adjacent to get KDL jacobian, 
+2. then find base frame motion given prescribed cup frame constrained motion then velocity control to this
+
+
+
